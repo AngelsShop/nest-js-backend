@@ -5,7 +5,7 @@ import { OperationStatusDto } from 'src/common/dto/status';
 import { CreateProductDto, ProductDto, UpdateProductDto } from './dto';
 
 @Injectable()
-export class ProductsService {
+export class ProductService {
   private readonly products: Product[] = [];
 
   list(): ProductDto[] {
