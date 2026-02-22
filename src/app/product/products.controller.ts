@@ -11,15 +11,15 @@ import {
   Put,
 } from '@nestjs/common';
 import { CreateProductDto, ProductDto, UpdateProductDto } from './dto';
-import { ProductsService } from './products.service';
+import { ProductService } from './products.service';
 import { ApiResponse } from '@nestjs/swagger';
 import { OperationStatusDto } from 'src/common/dto/status';
 
-@Controller('products')
-export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+@Controller('product')
+export class ProductController {
+  constructor(private readonly productsService: ProductService) {}
 
-  @Get()
+  @Get('/list')
   @ApiResponse({ type: [ProductDto] })
   list() {
     return this.productsService.list();
