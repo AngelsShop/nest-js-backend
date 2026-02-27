@@ -23,8 +23,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-  console.log(process.env.DB_HOST);
-
   await app.listen({ port }, () => console.log(`http://localhost:${port}/api`));
 }
 

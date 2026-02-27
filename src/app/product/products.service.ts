@@ -1,57 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { CreateProduct, Product } from './interfaces/product';
-import { uuid } from '$lib/uuid';
-import { OperationStatusDto } from 'src/common/dto/status';
-import { CreateProductDto, ProductDto, UpdateProductDto } from './dto';
+import { ListProductsFilter } from './types/product';
+import { ProductDto } from './dto';
+import { ProductsRepository } from './products.repository';
 
 @Injectable()
 export class ProductService {
-  private readonly products: Product[] = [];
+  constructor(private readonly productsRepository: ProductsRepository) {}
 
-  list(): ProductDto[] {
-    return this.products;
+  async list(filter: ListProductsFilter): Promise<ProductDto[]> {
+    return await this.productsRepository.list(filter);
   }
 
-  getById(id: string): ProductDto | undefined {
-    return this.products.find((product) => product.id === id);
-  }
-
-  create(product: CreateProduct): CreateProductDto {
-    const createdProduct = {
-      id: uuid(),
-      ...product,
-    };
-
-    this.products.push(createdProduct);
-
-    return createdProduct;
-  }
-
-  update(id: string, product: CreateProduct): UpdateProductDto | undefined {
-    const index = this.products.findIndex((product) => product.id === id);
-
-    if (index < 0) {
-      return;
-    }
-
-    this.products.splice(index, 1, { ...this.products[index], ...product });
-
-    return this.products[index];
-  }
-
-  delete(id: string): OperationStatusDto {
-    const index = this.products.findIndex((product) => product.id === id);
-
-    if (index < 0) {
-      return {
-        ok: false,
-      };
-    }
-
-    this.products.splice(index, 1);
-
-    return {
-      ok: true,
-    };
+  async getById(id: string): Promise<ProductDto | undefined> {
+    return await this.productsRepository.getById(id);
   }
 }
