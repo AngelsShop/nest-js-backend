@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Size } from 'src/constants/size';
 
 export class ProductDto {
   @ApiProperty()
@@ -15,6 +16,9 @@ export class ProductDto {
 
   @ApiProperty()
   image: string;
+
+  @ApiProperty()
+  size: Size;
 }
 
 export class CreateProductDto {
@@ -29,6 +33,9 @@ export class CreateProductDto {
 
   @ApiProperty()
   image: string;
+
+  @ApiProperty()
+  size: Size;
 }
 
 export class UpdateProductDto extends CreateProductDto {}

@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
   Post,
@@ -16,6 +17,7 @@ import { CreateProductDto, ProductDto, UpdateProductDto } from './dto';
 import { ProductService } from './products.service';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { OperationStatusDto } from 'src/common/dto/status';
+import { Size } from 'src/constants/size';
 
 @Controller('product')
 export class ProductController {
@@ -38,23 +40,43 @@ export class ProductController {
     type: String,
     required: false,
   })
+  @ApiQuery({
+    name: 'size',
+    enum: Size,
+    required: false,
+  })
   list(
     @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 30,
     @Query('categoryId', new ParseUUIDPipe({ optional: true }))
     categoryId: string,
+    @Query('size', new ParseEnumPipe(Size, { optional: true })) size: Size,
   ) {
     return this.productsService.list({
-      page,
-      limit,
-      categoryId,
+      filter: {
+        size,
+        categoryId,
+      },
+      pageData: {
+        page,
+        limit,
+      },
     });
   }
 
   @Get(':uuid')
   @ApiResponse({ type: ProductDto })
-  getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.productsService.getById(uuid);
+  async getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    const product = await this.productsService.getById(uuid);
+
+    if (!product) {
+      throw new HttpException(
+        `Продукт с id - ${uuid} не найден`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return product;
   }
 
   @Post('/create')

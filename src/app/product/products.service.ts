@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ListProductsFilter } from './types/product';
+import { ListProductsRequest } from './types/product';
 import { ProductDto } from './dto';
 import { ProductsRepository } from './products.repository';
 
@@ -7,8 +7,8 @@ import { ProductsRepository } from './products.repository';
 export class ProductService {
   constructor(private readonly productsRepository: ProductsRepository) {}
 
-  async list(filter: ListProductsFilter): Promise<ProductDto[]> {
-    return await this.productsRepository.list(filter);
+  async list(data: ListProductsRequest): Promise<ProductDto[]> {
+    return await this.productsRepository.list(data);
   }
 
   async getById(id: string): Promise<ProductDto | undefined> {
