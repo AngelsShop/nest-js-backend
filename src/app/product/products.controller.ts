@@ -13,18 +13,20 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { CreateProductDto, ProductDto, UpdateProductDto } from './dto';
 import { ProductService } from './products.service';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { OperationStatusDto } from 'src/common/dto/status';
+import { OperationStatusDto } from 'src/common/dto/status.dto';
 import { Size } from 'src/constants/size';
+import { Product } from './entities/product.entity';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dt';
 
 @Controller('product')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
   @Get('/list')
-  @ApiResponse({ type: [ProductDto] })
+  @ApiResponse({ type: [Product] })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -65,7 +67,7 @@ export class ProductController {
   }
 
   @Get(':uuid')
-  @ApiResponse({ type: ProductDto })
+  @ApiResponse({ type: Product })
   async getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
     const product = await this.productsService.getById(uuid);
 
@@ -80,7 +82,7 @@ export class ProductController {
   }
 
   @Post('/create')
-  @ApiResponse({ type: ProductDto })
+  @ApiResponse({ type: Product })
   create(@Body() _createProduct: CreateProductDto) {
     throw new HttpException(
       'Метод еще не разработан',
@@ -89,7 +91,7 @@ export class ProductController {
   }
 
   @Put('/update/:uuid')
-  @ApiResponse({ type: ProductDto })
+  @ApiResponse({ type: Product })
   update(
     @Param('uuid', new ParseUUIDPipe()) _uuid: string,
     @Body() _updateProduct: UpdateProductDto,

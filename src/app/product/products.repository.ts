@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/common/service/db/db.service';
-import { ListProductsFilter, ListProductsRequest } from './types/product';
+import { ListProductsFilter, ListProductsRequest } from './types';
 import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
+import { schema } from './entities/product.entity';
 
 @Injectable()
 export class ProductsRepository {
@@ -37,15 +38,15 @@ export class ProductsRepository {
   async list({ filter, pageData }: ListProductsRequest) {
     const { filters, params } = this.getProductsFilterQuery(filter);
 
-    const result = await this.dbService.query(
+    const result = await this.dbService.query<{ id: string }>(
       `SELECT * FROM products ${filters} ORDER BY created_at DESC ${this.getPagination(pageData)}`,
       params,
     );
 
-    return result?.rows as [];
+    return (result?.rows ?? []).map((p) => schema.validateSync(p));
   }
 
-  async count({ filter, pageData }: ListProductsRequest) {
+  async countPages({ filter, pageData }: ListProductsRequest) {
     const { filters, params } = this.getProductsFilterQuery(filter);
 
     const result = await this.dbService.query(
@@ -62,6 +63,12 @@ export class ProductsRepository {
       [id],
     );
 
-    return result?.rows?.[0] as undefined;
+    const item = result?.rows?.[0];
+
+    if (!item) {
+      return undefined;
+    }
+
+    return schema.validateSync(item);
   }
 }

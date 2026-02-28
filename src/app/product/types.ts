@@ -1,14 +1,6 @@
 import { Size } from 'src/constants/size';
 import { PageDataRequest } from 'src/types/PageData';
-
-export type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  size: Size;
-};
+import { Product } from './entities/product.entity';
 
 export type CreateProduct = Omit<Product, 'id'>;
 
