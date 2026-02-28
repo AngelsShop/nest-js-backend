@@ -7,3 +7,9 @@ export type Product = {
 };
 
 export type CreateProduct = Omit<Product, 'id'>;
+
+export type ListProductsFilter = {
+  page: number;
+  limit: number;
+  categoryId?: string;
+};
