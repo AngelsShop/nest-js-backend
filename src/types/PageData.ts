@@ -8,3 +8,8 @@ export type PageDataResponse = {
   limit: number;
   totalPages: number;
 };
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  pageData: PageDataResponse;
+};

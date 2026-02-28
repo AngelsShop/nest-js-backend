@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client } from 'pg';
+import { Client, QueryResultRow } from 'pg';
 
 @Injectable()
 export class DbService {
   constructor(private readonly configService: ConfigService) {}
 
-  async query(query: string, params: unknown[] | undefined = undefined) {
+  async query<R extends QueryResultRow = any>(
+    query: string,
+    params: unknown[] | undefined = undefined,
+  ) {
     const client: Client = new Client({
       host: this.configService.get<string>('DB_HOST'),
       user: this.configService.get<string>('DB_USER'),
@@ -17,7 +20,7 @@ export class DbService {
     await client.connect();
 
     try {
-      const res = await client.query(query, params);
+      const res = await client.query<R>(query, params);
 
       return res;
     } catch (err) {
