@@ -9,8 +9,8 @@ import {
   ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
+  Patch,
   Post,
-  Put,
   Query,
 } from '@nestjs/common';
 import { ProductService } from './products.service';
@@ -90,7 +90,7 @@ export class ProductController {
     );
   }
 
-  @Put('/update/:uuid')
+  @Patch('/update/:uuid')
   @ApiResponse({ type: Product })
   update(
     @Param('uuid', new ParseUUIDPipe()) _uuid: string,

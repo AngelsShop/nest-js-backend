@@ -23,16 +23,16 @@ export class CategoryController {
   @Get('/list')
   @ApiResponse({ type: [Category] })
   findAll() {
-    return this.categoryService.findAll();
+    return this.categoryService.list();
   }
 
   @Get(':uuid')
   @ApiResponse({ type: Category })
   findOne(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    return this.categoryService.findOne(uuid);
+    return this.categoryService.getById(uuid);
   }
 
-  @Post()
+  @Post('/create')
   @ApiResponse({ type: Category })
   create(@Body() _createCategoryDto: CreateCategoryDto) {
     throw new HttpException(

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
-import { number, object, string } from 'yup';
+import { number, object, ObjectSchema, string } from 'yup';
 
 export class Product {
   @ApiProperty()
@@ -22,7 +22,7 @@ export class Product {
   size: Size;
 }
 
-export const schema = object({
+export const schema: ObjectSchema<Product> = object({
   id: string().uuid().required(),
   name: string().required(),
   description: string().defined(),
