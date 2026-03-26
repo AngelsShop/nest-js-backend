@@ -15,6 +15,7 @@ export class DbService {
       user: this.configService.get<string>('DB_USER'),
       database: this.configService.get<string>('DB_NAME'),
       port: this.configService.get<number>('DB_PORT'),
+      password: this.configService.get<string>('DB_PASSWORD'),
     });
 
     await client.connect();
