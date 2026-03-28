@@ -11,11 +11,11 @@ export class DbService {
     params: unknown[] | undefined = undefined,
   ) {
     const client: Client = new Client({
-      host: this.configService.get<string>('DB_HOST'),
-      user: this.configService.get<string>('DB_USER'),
-      database: this.configService.get<string>('DB_NAME'),
-      port: this.configService.get<number>('DB_PORT'),
-      password: this.configService.get<string>('DB_PASSWORD'),
+      host: this.configService.get<string>('POSTGRES_HOST'),
+      user: this.configService.get<string>('POSTGRES_USER'),
+      database: this.configService.get<string>('POSTGRES_DB'),
+      port: this.configService.get<number>('POSTGRES_PORT'),
+      password: this.configService.get<string>('POSTGRES_PASSWORD'),
     });
 
     await client.connect();
