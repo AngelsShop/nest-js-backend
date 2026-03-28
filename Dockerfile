@@ -14,7 +14,7 @@ FROM node:22
 
 WORKDIR /app
 
-RUN npm ci --only=production
+RUN npm ci --only=production --no-optional
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
