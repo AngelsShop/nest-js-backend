@@ -12,6 +12,8 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  app.setGlobalPrefix('/api/v1');
+
   const swagger = new DocumentBuilder()
     .setTitle('API для AngelsShop')
     .setVersion('v1')
