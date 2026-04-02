@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -9,17 +8,15 @@ import {
   ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
-  Patch,
   Post,
   Query,
 } from '@nestjs/common';
 import { ProductService } from './products.service';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { OperationStatusDto } from 'src/common/dto/status.dto';
+import { ItemIdDto } from 'src/common/dto/status.dto';
 import { Size } from 'src/constants/size';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dt';
 
 @Controller('product')
 export class ProductController {
@@ -81,35 +78,9 @@ export class ProductController {
     return product;
   }
 
-  @Post('/create')
-  @ApiResponse({ type: Product })
-  create(@Body() _createProduct: CreateProductDto) {
-    throw new HttpException(
-      'Метод еще не разработан',
-      HttpStatus.NOT_IMPLEMENTED,
-    );
-  }
-
-  @Patch('/update/:uuid')
-  @ApiResponse({ type: Product })
-  update(
-    @Param('uuid', new ParseUUIDPipe()) _uuid: string,
-    @Body() _updateProduct: UpdateProductDto,
-  ) {
-    throw new HttpException(
-      'Метод еще не разработан',
-      HttpStatus.NOT_IMPLEMENTED,
-    );
-  }
-
-  @Delete(':uuid')
-  @ApiResponse({
-    type: OperationStatusDto,
-  })
-  delete(@Param('uuid', new ParseUUIDPipe()) _uuid: string) {
-    throw new HttpException(
-      'Метод еще не разработан',
-      HttpStatus.NOT_IMPLEMENTED,
-    );
+  @Post('/dev/create')
+  @ApiResponse({ type: ItemIdDto })
+  async create(@Body() createProduct: CreateProductDto) {
+    return await this.productsService.create(createProduct);
   }
 }

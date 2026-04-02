@@ -19,6 +19,9 @@ export class Product {
   image: string;
 
   @ApiProperty()
+  categoryId?: string;
+
+  @ApiProperty()
   size?: Size;
 }
 
@@ -28,6 +31,9 @@ export const schema: ObjectSchema<Product> = object({
   description: string().defined(),
   price: number().required(),
   image: string().url().required(),
+  categoryId: string()
+    .transform((value: Size | null) => value ?? undefined)
+    .optional(),
   size: string()
     .oneOf(Object.values(Size))
     .transform((value: Size | null) => value ?? undefined)
