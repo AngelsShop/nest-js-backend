@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { array, object, ObjectSchema, string } from 'yup';
+import { object, ObjectSchema, string } from 'yup';
 
 export class Category {
   @ApiProperty()
@@ -20,13 +20,7 @@ export class CategoryRaw {
   parent_category_id?: string | null;
 }
 
-export const schema: ObjectSchema<Category> = object({
-  id: string().uuid().required(),
-  name: string().required(),
-  children: array<Category>().required(),
-});
-
-export const dbSchema: ObjectSchema<CategoryRaw> = object({
+export const schema: ObjectSchema<CategoryRaw> = object({
   id: string().uuid().required(),
   name: string().required(),
   parent_category_id: string().uuid().optional().nullable(),

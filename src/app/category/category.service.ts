@@ -9,8 +9,4 @@ export class CategoryService {
   list(): Promise<Category[]> {
     return this.categoryRepository.list();
   }
-
-  getById(id: string): Promise<Category | undefined> {
-    return this.categoryRepository.getById(id);
-  }
 }
