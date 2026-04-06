@@ -3,7 +3,6 @@ import { ListProductsRequest } from './types';
 import { ProductsRepository } from './products.repository';
 import { Product } from './entities/product.entity';
 import { PaginatedResponse } from 'src/types/PageData';
-import { CreateProductDto } from './dto/create-product.dto';
 
 @Injectable()
 export class ProductService {
@@ -26,9 +25,5 @@ export class ProductService {
 
   async getById(id: string): Promise<Product | undefined> {
     return await this.productsRepository.getById(id);
-  }
-
-  async create(product: CreateProductDto) {
-    return await this.productsRepository.createProduct(product);
   }
 }

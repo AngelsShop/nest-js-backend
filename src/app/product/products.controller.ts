@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Get,
   HttpException,
@@ -8,15 +7,12 @@ import {
   ParseEnumPipe,
   ParseIntPipe,
   ParseUUIDPipe,
-  Post,
   Query,
 } from '@nestjs/common';
 import { ProductService } from './products.service';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { ItemIdDto } from 'src/common/dto/status.dto';
 import { Size } from 'src/constants/size';
 import { Product } from './entities/product.entity';
-import { CreateProductDto } from './dto/create-product.dto';
 
 @Controller('product')
 export class ProductController {
@@ -76,11 +72,5 @@ export class ProductController {
     }
 
     return product;
-  }
-
-  @Post('/dev/create')
-  @ApiResponse({ type: ItemIdDto })
-  async create(@Body() createProduct: CreateProductDto) {
-    return await this.productsService.create(createProduct);
   }
 }

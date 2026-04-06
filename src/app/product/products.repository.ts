@@ -4,8 +4,6 @@ import { ListProductsFilter, ListProductsRequest } from './types';
 import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
 import { schema } from './entities/product.entity';
-import { CreateProductDto } from './dto/create-product.dto';
-import { object, string } from 'yup';
 
 @Injectable()
 export class ProductsRepository {
@@ -72,29 +70,5 @@ export class ProductsRepository {
     }
 
     return schema.validateSync(item);
-  }
-
-  async createProduct(product: CreateProductDto) {
-    const insertColumns = Object.keys(product).map(
-      (column) => ColumnsMap[column as keyof typeof ColumnsMap],
-    );
-
-    const valuesToInsert = Object.keys(product).reduce<unknown[]>(
-      (acc, column) => {
-        acc.push(product[column]);
-
-        return acc;
-      },
-      [],
-    );
-
-    const result = await this.dbService.query(
-      `INSERT INTO products (${insertColumns.join(',')}) VALUES (${insertColumns.map((__dirname, index) => `$${index + 1}`).join(',')}) RETURNING id`,
-      valuesToInsert,
-    );
-
-    return object({
-      id: string().required(),
-    }).validateSync(result?.rows[0]);
   }
 }
