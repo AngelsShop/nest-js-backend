@@ -1,16 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/common/service/db/db.service';
-import { ListProductsFilter, ListProductsRequest } from './types';
+import {
+  ListProductsFilter,
+  ListProductsRequest,
+  ProductAttributes,
+} from './types';
 import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
-import { schema } from './entities/product.entity';
+import { ProductCard } from './entities/product-card.entity';
+import { ProductListItem } from './entities/product-list-item.entity';
+import { TableNames } from 'src/constants/tables';
+import { string } from 'yup';
+import {
+  ProductListItemDto,
+  productListItemDtoSchema,
+} from './dto/list-item.dto';
+import { Size } from 'src/constants/size';
 
 @Injectable()
 export class ProductsRepository {
   constructor(private readonly dbService: DbService) {}
 
-  private getProductsFilterQuery(filter: ListProductsFilter) {
-    const filters = ['WHERE 1=1'];
+  private getProductsFilterQuery(
+    filter: ListProductsFilter,
+    dbName?: TableNames,
+  ) {
+    const filters: string[] = ['1=1'];
     const params: unknown[] = [];
 
     for (const key in filter) {
@@ -22,7 +37,9 @@ export class ProductsRepository {
 
       params.push(filter[key]);
 
-      filters.push(`${dbField} = $${params.length}`);
+      filters.push(
+        `${dbName ? dbName + '.' : ''}${dbField} = $${params.length}`,
+      );
     }
 
     return {
@@ -35,40 +52,151 @@ export class ProductsRepository {
     return `LIMIT ${limit} OFFSET ${limit * (page - 1)}`;
   }
 
-  async list({ filter, pageData }: ListProductsRequest) {
-    const { filters, params } = this.getProductsFilterQuery(filter);
+  private async getPageCardIds({
+    filter,
+    pageData,
+  }: ListProductsRequest): Promise<string[]> {
+    const { filters, params } = this.getProductsFilterQuery(
+      filter,
+      TableNames.PRODUCTS,
+    );
 
     const result = await this.dbService.query<{ id: string }>(
-      `SELECT * FROM products ${filters} ORDER BY created_at DESC ${this.getPagination(pageData)}`,
+      `
+      SELECT id
+      FROM ${TableNames.PRODUCTS}
+      WHERE ${filters}
+      ${this.getPagination(pageData)}
+    `,
       params,
     );
 
-    return (result?.rows ?? []).map((p) => schema.validateSync(p));
+    return (result?.rows ?? []).map(({ id }) =>
+      string().uuid().required().validateSync(id),
+    );
+  }
+
+  async list({
+    filter,
+    pageData,
+  }: ListProductsRequest): Promise<ProductListItem[]> {
+    const cardIds = await this.getPageCardIds({ filter, pageData });
+
+    const result = await this.dbService.query(
+      `
+        SELECT
+          ${TableNames.PRODUCTS}.id as "productId",
+          ${TableNames.PRODUCTS}.title,
+          ${TableNames.PRODUCTS}.preview_image as "previewImage",
+          ${TableNames.PRODUCTS}.created_at as "createdAt",
+          ${TableNames.PRODUCT_VARIANTS}.id as "variantId",
+          ${TableNames.PRODUCT_VARIANTS}.size,
+          ${TableNames.PRODUCT_VARIANTS}.color,
+          ${TableNames.PRODUCT_VARIANTS}.is_default as "isDefault",
+          ${TableNames.PRODUCT_VARIANTS}.price
+        FROM ${TableNames.PRODUCTS}
+        JOIN  ${TableNames.PRODUCT_VARIANTS}
+        ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+        WHERE
+          ${TableNames.PRODUCTS}.id = ANY($1)
+        ORDER BY created_at DESC
+      `,
+      [cardIds],
+    );
+
+    const listItems: ProductListItemDto[] = (result?.rows ?? []).map((v) =>
+      productListItemDtoSchema.validateSync(v),
+    );
+
+    const attributesMap = listItems.reduce<Record<string, ProductAttributes>>(
+      (acc, item) => {
+        if (!acc[item.productId]) {
+          acc[item.productId] = {
+            colors: new Set(),
+            sizes: new Set<Size>(),
+          };
+        }
+
+        acc[item.productId].colors.add(item.color);
+        acc[item.productId].sizes.add(item.size);
+
+        return acc;
+      },
+      {},
+    );
+
+    return listItems
+      .filter(({ isDefault }) => isDefault)
+      .reduce<ProductListItem[]>((arr, item) => {
+        arr.push({
+          ...item,
+          sizes: [...(attributesMap[item.productId]?.sizes ?? [])],
+          colors: [...(attributesMap[item.productId]?.colors ?? [])],
+        });
+
+        return arr;
+      }, []);
   }
 
   async countPages({ filter, pageData }: ListProductsRequest) {
     const { filters, params } = this.getProductsFilterQuery(filter);
 
     const result = await this.dbService.query(
-      `SELECT * FROM products ${filters} ORDER BY created_at DESC`,
+      `SELECT * FROM ${TableNames.PRODUCTS} WHERE ${filters} ORDER BY created_at DESC`,
       params,
     );
 
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
 
-  async getById(id: string) {
-    const result = await this.dbService.query(
-      'SELECT * FROM products WHERE id = $1',
+  async getById(id: string): Promise<ProductCard | undefined> {
+    const productResult = await this.dbService.query(
+      `
+        SELECT
+          ${TableNames.PRODUCTS}.id,
+          ${TableNames.PRODUCTS}.title,
+          ${TableNames.PRODUCTS}.preview_image as "previewImage",
+          ${TableNames.PRODUCTS}.created_at as "createdAt",
+          ${TableNames.PRODUCTS}.category_id as "categoryId",
+          ${TableNames.PRODUCT_VARIANTS}.id as "variantId"
+        FROM ${TableNames.PRODUCTS}
+        JOIN ${TableNames.PRODUCT_VARIANTS}
+        ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+        WHERE ${TableNames.PRODUCTS}.id = $1
+      `,
       [id],
     );
 
-    const item = result?.rows?.[0];
+    const item = productResult?.rows?.[0];
 
     if (!item) {
       return undefined;
     }
 
-    return schema.validateSync(item);
+    console.log(item);
+
+    // const product = productSchema.validateSync(item);
+
+    // const variantsResult = await this.dbService.query(
+    //   `
+    //     SELECT
+    //       id,
+    //       name,
+    //       images,
+    //       price,
+    //       description,
+    //       product_id as productId,
+    //       color,
+    //       size,
+    //       is_default as isDefault
+    //     FROM ${TableNames.PRODUCT_VARIANTS}
+    //     WHERE product_id = $1
+    //   `,
+    //   [id],
+    // );
+
+    // return product;
+
+    return;
   }
 }

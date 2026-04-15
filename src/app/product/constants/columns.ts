@@ -6,4 +6,5 @@ export enum ColumnsMap {
   image = 'image',
   size = 'size',
   categoryId = 'category_id',
+  isDefault = 'is_default',
 }

@@ -12,14 +12,15 @@ import {
 import { ProductService } from './products.service';
 import { ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
-import { Product } from './entities/product.entity';
+import { ProductCard } from './entities/product-card.entity';
+import { ProductListItem } from './entities/product-list-item.entity';
 
 @Controller('product')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
   @Get('/list')
-  @ApiResponse({ type: [Product] })
+  @ApiResponse({ type: [ProductListItem] })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -60,7 +61,7 @@ export class ProductController {
   }
 
   @Get(':uuid')
-  @ApiResponse({ type: Product })
+  @ApiResponse({ type: ProductCard })
   async getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
     const product = await this.productsService.getById(uuid);
 
