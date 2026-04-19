@@ -22,7 +22,7 @@ export class DbService {
     await client.connect();
 
     try {
-      this.logger.log(query);
+      this.logger.debug(query, params);
       const res = await client.query<R>(query, params);
 
       return res;

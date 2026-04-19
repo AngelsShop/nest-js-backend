@@ -1,6 +1,6 @@
 import { Size } from 'src/constants/size';
 import { PageDataRequest } from 'src/types/PageData';
-import { ProductListItemDto } from './dto/list-item.dto';
+import { ProductListItemDto } from './dto/product-list-item.dto';
 
 export type ListProductsRequest = {
   filter: ListProductsFilter;

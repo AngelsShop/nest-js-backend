@@ -26,7 +26,10 @@ export class ProductService {
     };
   }
 
-  async getById(id: string): Promise<ProductCard | undefined> {
-    return await this.productsRepository.getById(id);
+  async getById(
+    id: string,
+    variantId?: string,
+  ): Promise<ProductCard | undefined> {
+    return await this.productsRepository.getById(id, variantId);
   }
 }

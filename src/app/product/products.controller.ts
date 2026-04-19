@@ -61,9 +61,18 @@ export class ProductController {
   }
 
   @Get(':uuid')
+  @ApiQuery({
+    name: 'variant_id',
+    type: String,
+    required: false,
+  })
   @ApiResponse({ type: ProductCard })
-  async getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    const product = await this.productsService.getById(uuid);
+  async getByID(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @Query('variant_id', new ParseUUIDPipe({ optional: true }))
+    variantId: string,
+  ) {
+    const product = await this.productsService.getById(uuid, variantId);
 
     if (!product) {
       throw new HttpException(

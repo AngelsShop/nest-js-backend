@@ -7,6 +7,9 @@ export class ProductVariant {
   id: string;
 
   @ApiProperty()
+  productId: string;
+
+  @ApiProperty()
   name: string;
 
   @ApiProperty()
@@ -28,13 +31,14 @@ export class ProductVariant {
   isDefault: boolean;
 }
 
-export const schema: ObjectSchema<ProductVariant> = object({
+export const productVariantSchema: ObjectSchema<ProductVariant> = object({
   id: string().uuid().required(),
+  productId: string().uuid().required(),
   name: string().required(),
   description: string().required(),
   color: string().required(),
   isDefault: boolean().required(),
   price: number().required(),
-  images: array(string().url().required()).required(),
+  images: array(string().required()).required(),
   size: string().oneOf(Object.values(Size)).required(),
 });

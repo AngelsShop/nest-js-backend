@@ -14,8 +14,14 @@ import { string } from 'yup';
 import {
   ProductListItemDto,
   productListItemDtoSchema,
-} from './dto/list-item.dto';
+} from './dto/product-list-item.dto';
 import { Size } from 'src/constants/size';
+import {
+  ProductVariant,
+  productVariantSchema,
+} from './entities/product-variant.entity';
+import { productCardDtoSchema } from './dto/product-card.dto';
+// import { productCardDtoSchema } from './dto/product-card.dto';
 
 @Injectable()
 export class ProductsRepository {
@@ -149,8 +155,11 @@ export class ProductsRepository {
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
 
-  async getById(id: string): Promise<ProductCard | undefined> {
-    const productResult = await this.dbService.query(
+  async getById(
+    id: string,
+    variantId?: string,
+  ): Promise<ProductCard | undefined> {
+    const productCardResult = await this.dbService.query(
       `
         SELECT
           ${TableNames.PRODUCTS}.id,
@@ -162,41 +171,72 @@ export class ProductsRepository {
         FROM ${TableNames.PRODUCTS}
         JOIN ${TableNames.PRODUCT_VARIANTS}
         ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
-        WHERE ${TableNames.PRODUCTS}.id = $1
+        WHERE
+          ${TableNames.PRODUCT_VARIANTS}.product_id = $1
+          AND (
+            ${TableNames.PRODUCT_VARIANTS}.id = $2
+            OR (
+              $2 IS NULL
+              AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
+            )
+          )
       `,
-      [id],
+      [id, variantId || null],
     );
 
-    const item = productResult?.rows?.[0];
+    const productCard = (productCardResult?.rows ?? []).map((c) =>
+      productCardDtoSchema.validateSync(c),
+    )[0];
 
-    if (!item) {
-      return undefined;
+    if (!productCard) {
+      return;
     }
 
-    console.log(item);
+    const variants = await this.getProductVariants(productCard.id);
+    const defaultVariant = variants.find(({ isDefault }) => isDefault);
 
-    // const product = productSchema.validateSync(item);
+    if (!defaultVariant) {
+      return;
+    }
 
-    // const variantsResult = await this.dbService.query(
-    //   `
-    //     SELECT
-    //       id,
-    //       name,
-    //       images,
-    //       price,
-    //       description,
-    //       product_id as productId,
-    //       color,
-    //       size,
-    //       is_default as isDefault
-    //     FROM ${TableNames.PRODUCT_VARIANTS}
-    //     WHERE product_id = $1
-    //   `,
-    //   [id],
-    // );
+    return {
+      ...productCard,
+      variant: defaultVariant,
+      variants,
+    };
+  }
 
-    // return product;
+  async getProductVariants(
+    id: string,
+    variantIds?: string[],
+  ): Promise<ProductVariant[]> {
+    const productVariantsResult = await this.dbService.query(
+      `
+        SELECT
+          id,
+          name,
+          images,
+          price,
+          description,
+          color,
+          size,
+          product_id as "productId",
+          is_default as "isDefault"
+        FROM ${TableNames.PRODUCT_VARIANTS}
+        WHERE
+          product_id = $1
+          AND (
+            id IN ($2)
+            OR $2 IS NULL
+          )
+      `,
+      [id, variantIds || null],
+    );
 
-    return;
+    const variants = (productVariantsResult?.rows ?? []).map((v) =>
+      productVariantSchema.validateSync(v),
+    );
+
+    return variants;
   }
 }
