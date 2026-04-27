@@ -31,4 +31,4 @@ export const productCardSchema: ObjectSchema<ProductCard> = object({
     .optional(),
   variant: productVariantSchema.required(),
   variants: array(productVariantSchema).required(),
-});
+}).stripUnknown();

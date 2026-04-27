@@ -8,7 +8,10 @@ import {
 import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
 import { ProductCard } from './entities/product-card.entity';
-import { ProductListItem } from './entities/product-list-item.entity';
+import {
+  ProductListItem,
+  productListItemSchema,
+} from './entities/product-list-item.entity';
 import { TableNames } from 'src/constants/tables';
 import { string } from 'yup';
 import {
@@ -141,7 +144,8 @@ export class ProductsRepository {
         });
 
         return arr;
-      }, []);
+      }, [])
+      .map((item) => productListItemSchema.validateSync(item));
   }
 
   async countPages({ filter, pageData }: ListProductsRequest) {

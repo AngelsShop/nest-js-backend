@@ -41,4 +41,4 @@ export const productVariantSchema: ObjectSchema<ProductVariant> = object({
   price: number().required(),
   images: array(string().required()).required(),
   size: string().oneOf(Object.values(Size)).required(),
-});
+}).stripUnknown();
