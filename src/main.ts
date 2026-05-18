@@ -4,18 +4,22 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
 
   app.setGlobalPrefix('/api/v1');
   app.useGlobalPipes(new ValidationPipe());
 
   const swagger = new DocumentBuilder()
+    .addBearerAuth()
     .setTitle('API для AngelsShop')
     .setVersion('v1')
     .build();
 
-  SwaggerModule.setup('api', app, () =>
-    SwaggerModule.createDocument(app, swagger),
+  SwaggerModule.setup(
+    'api',
+    app,
+    () => SwaggerModule.createDocument(app, swagger),
+    { swaggerOptions: { persistAuthorization: true } },
   );
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
