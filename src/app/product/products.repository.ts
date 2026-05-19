@@ -159,10 +159,7 @@ export class ProductsRepository {
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
 
-  async getById(
-    id: string,
-    variantId?: string,
-  ): Promise<ProductCard | undefined> {
+  async getById(id: string): Promise<ProductCard | undefined> {
     const productCardResult = await this.dbService.query(
       `
         SELECT
@@ -177,15 +174,9 @@ export class ProductsRepository {
         ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
         WHERE
           ${TableNames.PRODUCT_VARIANTS}.product_id = $1
-          AND (
-            ${TableNames.PRODUCT_VARIANTS}.id = $2
-            OR (
-              $2 IS NULL
-              AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
-            )
-          )
+          AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
       `,
-      [id, variantId || null],
+      [id],
     );
 
     const productCard = (productCardResult?.rows ?? []).map((c) =>
@@ -210,10 +201,7 @@ export class ProductsRepository {
     };
   }
 
-  async getProductVariants(
-    id: string,
-    variantIds?: string[],
-  ): Promise<ProductVariant[]> {
+  async getProductVariants(id: string): Promise<ProductVariant[]> {
     const productVariantsResult = await this.dbService.query(
       `
         SELECT
@@ -229,12 +217,8 @@ export class ProductsRepository {
         FROM ${TableNames.PRODUCT_VARIANTS}
         WHERE
           product_id = $1
-          AND (
-            id IN ($2)
-            OR $2 IS NULL
-          )
       `,
-      [id, variantIds || null],
+      [id],
     );
 
     const variants = (productVariantsResult?.rows ?? []).map((v) =>
