@@ -14,6 +14,7 @@ import { ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
 import { ProductCard } from './entities/product-card.entity';
 import { ProductListItem } from './entities/product-list-item.entity';
+import { ProductVariant } from './entities/product-variant.entity';
 
 @Controller('product')
 export class ProductController {
@@ -82,5 +83,20 @@ export class ProductController {
     }
 
     return product;
+  }
+
+  @Get(':uuid/variants')
+  @ApiResponse({ type: ProductVariant })
+  async getProductVariants(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
+    const variants = await this.productsService.getProductVariants(uuid);
+
+    if (!variants) {
+      throw new HttpException(
+        `Продукт с id - ${uuid} не найден`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return variants;
   }
 }

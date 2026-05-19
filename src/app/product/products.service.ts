@@ -4,6 +4,7 @@ import { ProductsRepository } from './products.repository';
 import { ProductCard } from './entities/product-card.entity';
 import { PaginatedResponse } from 'src/types/PageData';
 import { ProductListItem } from './entities/product-list-item.entity';
+import { ProductVariant } from './entities/product-variant.entity';
 
 @Injectable()
 export class ProductService {
@@ -31,5 +32,9 @@ export class ProductService {
     variantId?: string,
   ): Promise<ProductCard | undefined> {
     return await this.productsRepository.getById(id, variantId);
+  }
+
+  getProductVariants(uuid: string): Promise<ProductVariant[] | undefined> {
+    return this.productsRepository.getProductVariants(uuid);
   }
 }
