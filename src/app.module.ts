@@ -5,14 +5,16 @@ import { ConfigModule } from '@nestjs/config';
 import { DbModule } from './common/service/db/db.module';
 import { AuthModule } from './app/auth/auth.module';
 import { UserModule } from '$app/user/user.module';
+import { FilesModule } from '$app/files/files.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     ProductModule,
     CategoryModule,
     UserModule,
+    FilesModule,
     DbModule,
-    ConfigModule.forRoot(),
     AuthModule,
   ],
 })
