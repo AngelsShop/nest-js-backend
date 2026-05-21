@@ -18,7 +18,7 @@ export class ProductCard {
   @ApiProperty()
   variant: ProductVariant;
 
-  @ApiProperty()
+  @ApiProperty({ deprecated: true })
   variants: ProductVariant[];
 }
 

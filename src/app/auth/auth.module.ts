@@ -8,10 +8,12 @@ import { AuthRepository } from './auth.repository';
 import { LocalStrategy } from './local.strategy';
 import { ExtractJwt } from 'passport-jwt';
 import { JwtStrategy } from './jwt.strategy';
+import { UserModule } from '$app/user/user.module';
 
 @Module({
   imports: [
     DbModule,
+    UserModule,
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
