@@ -4,10 +4,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { TableNames } from 'src/constants/tables';
 import { getInsertValuesPlaceholders } from '$lib/getInsertValuesPlaceholders';
 import { User, schema } from './entities/user.entity';
-import { string } from 'yup';
+import { object, string } from 'yup';
 
 @Injectable()
-export class AuthRepository {
+export class UserRepository {
   constructor(private dbService: DbService) {}
 
   private async getCrateUserData(data: CreateUserDto) {
@@ -28,16 +28,20 @@ export class AuthRepository {
       [login],
     );
 
-    const user = res?.rows?.[0];
+    const hashData = res?.rows?.[0];
 
-    if (!user) {
+    if (!hashData) {
       return;
     }
 
-    return string().required().validate(user);
+    const { passwordHash } = await object({
+      passwordHash: string().required(),
+    }).validate(hashData);
+
+    return passwordHash;
   }
 
-  async getUser(login: string): Promise<User | undefined> {
+  async getUser(loginOrId: string): Promise<User | undefined> {
     const res = await this.dbService.query(
       `
         SELECT
@@ -45,11 +49,13 @@ export class AuthRepository {
           phone,
           first_name as firstName,
           last_name as lastName,
-          email,
+          email
         FROM ${TableNames.USERS}
-        WHERE phone = $1
+        WHERE 
+          phone = $1
+          OR id::text = $1
       `,
-      [login],
+      [loginOrId],
     );
 
     const user = res?.rows?.[0];

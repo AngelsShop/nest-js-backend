@@ -1,43 +1,23 @@
 import {
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { compare, hash } from 'bcrypt';
-import { AuthRepository } from './auth.repository';
 import { SALT_ROUNDS } from './constants';
 import { schema, User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { UserService } from '$app/user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private repository: AuthRepository,
     private jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
-
-  private async hashPassword(password: string): Promise<string> {
-    return await hash(password, SALT_ROUNDS);
-  }
-
-  private async comparePassword(
-    password: string,
-    hash: string,
-  ): Promise<boolean> {
-    return await compare(password, hash);
-  }
-
-  async getUser(login: string): Promise<User> {
-    const user = await this.repository.getUser(login);
-
-    if (!user) {
-      throw new NotFoundException();
-    }
-
-    return schema.validateSync(user);
-  }
 
   signIn(user: User) {
     const payload = { username: user.phone, sub: user.id };
@@ -47,13 +27,19 @@ export class AuthService {
   }
 
   async validateUser(signInDto: SignInDto): Promise<User | undefined> {
-    const user = await this.repository.getUser(signInDto.login);
+    const user = await this.userService.getUser(signInDto.login);
 
     if (!user) {
       throw new NotFoundException();
     }
 
-    if (!(await this.comparePassword(signInDto.password, user.passwordHash))) {
+    const passwordHash = await this.userService.getUserPasswordHash(user.phone);
+
+    if (!passwordHash) {
+      throw new InternalServerErrorException();
+    }
+
+    if (!(await compare(signInDto.password, passwordHash))) {
       throw new UnauthorizedException();
     }
 
@@ -61,9 +47,9 @@ export class AuthService {
   }
 
   async signUp(dto: SignUpDto) {
-    const user = await this.repository.createUser({
+    const user = await this.userService.createUser({
       login: dto.login,
-      password: await this.hashPassword(dto.password),
+      password: await hash(dto.password, SALT_ROUNDS),
     });
 
     return { ...this.signIn(user), user };

@@ -1,4 +1,4 @@
-import { JwtAuthGuard } from '$app/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '$app/auth/passport/jwt-auth.guard';
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
