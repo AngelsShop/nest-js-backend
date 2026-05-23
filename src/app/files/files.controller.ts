@@ -11,7 +11,7 @@ import { ApiBody, ApiConsumes, ApiResponse } from '@nestjs/swagger';
 import { FilesUploadDto, FilesUploadResultDto } from './dto/files-upload.dto';
 import { FilesService } from './files.service';
 
-@Controller('files')
+@Controller('file')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
