@@ -5,16 +5,24 @@ import { TableNames } from 'src/constants/tables';
 import { getInsertValuesPlaceholders } from '$lib/getInsertValuesPlaceholders';
 import { User, schema } from './entities/user.entity';
 import { object, string } from 'yup';
+import { mapDtoNamesToColumnNames } from './helpers/mapDtoNamesToColumnNames';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserRepository {
   constructor(private dbService: DbService) {}
 
-  private async getCrateUserData(data: CreateUserDto) {
-    return {
-      phone: data.login,
-      password_hash: data.password,
-    };
+  private prepareUpdateUserData(data: UpdateUserDto) {
+    return Object.entries(data).reduce((acc, [key, value]) => {
+      const mapedKey = mapDtoNamesToColumnNames(key as keyof UpdateUserDto);
+      if (!value || !mapedKey) {
+        return acc;
+      }
+
+      acc[mapedKey] = value;
+
+      return acc;
+    }, {});
   }
 
   async getUserPasswordHash(login: string): Promise<string | undefined> {
@@ -47,8 +55,8 @@ export class UserRepository {
         SELECT
           id,
           phone,
-          first_name as firstName,
-          last_name as lastName,
+          first_name as "firstName",
+          last_name as "lastName",
           email
         FROM ${TableNames.USERS}
         WHERE 
@@ -68,23 +76,50 @@ export class UserRepository {
   }
 
   async createUser(data: CreateUserDto) {
-    const userData = await this.getCrateUserData(data);
-
     const res = await this.dbService.query(
       `
       INSERT INTO ${TableNames.USERS}
-      (${Object.keys(userData).join()})
-      VALUES (${getInsertValuesPlaceholders(Object.values(userData))})
+      (phone, password_hash)
+      VALUES ($1, $2)
       RETURNING
         id,
         phone,
-        first_name as firstName,
-        last_name as lastName,
+        first_name as "firstName",
+        last_name as "lastName",
         email
     `,
-      Object.values(userData),
+      [data.login, data.password],
     );
 
     return schema.validateSync(res?.rows?.[0]);
+  }
+
+  async updateUser(id: string, user: UpdateUserDto) {
+    const preparedData = this.prepareUpdateUserData(user);
+
+    const res = await this.dbService.query(
+      `
+        UPDATE ${TableNames.USERS}
+        SET
+          ${getInsertValuesPlaceholders(Object.keys(preparedData), 2)}
+        WHERE
+          id = $1
+        RETURNING
+          id,
+          phone,
+          first_name as "firstName",
+          last_name as "lastName",
+          email
+      `,
+      [id, ...Object.values(preparedData)],
+    );
+
+    const updateUser = res?.rows?.[0];
+
+    if (!updateUser) {
+      return;
+    }
+
+    return schema.validate(updateUser);
   }
 }

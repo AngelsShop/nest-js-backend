@@ -8,9 +8,9 @@ import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { compare, hash } from 'bcrypt';
 import { SALT_ROUNDS } from './constants';
-import { schema, User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '$app/user/user.service';
+import { User, schema } from '$app/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
