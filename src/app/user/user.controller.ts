@@ -1,5 +1,5 @@
 import { JwtAuthGuard } from '$app/auth/passport/jwt-auth.guard';
-import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { UserService } from './user.service';
@@ -18,7 +18,7 @@ export class UserController {
     return await this.userService.getUser(request.user.id);
   }
 
-  @Put('update')
+  @Patch('update')
   @ApiResponse({ type: User })
   async updateUser(
     @Body() user: UpdateUserDto,
