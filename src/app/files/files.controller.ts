@@ -1,5 +1,7 @@
 import {
   Controller,
+  FileTypeValidator,
+  ParseFilePipe,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -18,7 +20,16 @@ export class FilesController {
   @UseInterceptors(FilesInterceptor('files'))
   @ApiBody({ type: FilesUploadDto })
   @ApiResponse({ type: FilesUploadResultDto })
-  uploadFile(@UploadedFiles() files: Express.Multer.File[]) {
+  uploadFile(
+    @UploadedFiles(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|webp|gif)$' }),
+        ],
+      }),
+    )
+    files: Express.Multer.File[],
+  ) {
     return this.filesService.uploadFiles(files);
   }
 }
