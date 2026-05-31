@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ListProductsRequest } from './types';
 import { ProductsRepository } from './products.repository';
 import { ProductCard } from './entities/product-card.entity';
 import { PaginatedResponse } from 'src/types/PageData';
 import { ProductListItem } from './entities/product-list-item.entity';
 import { ProductVariant } from './entities/product-variant.entity';
+import { OperationStatusDto } from 'src/common/dto/status.dto';
 
 @Injectable()
 export class ProductService {
@@ -31,7 +32,41 @@ export class ProductService {
     return await this.productsRepository.getById(id);
   }
 
-  getProductVariants(uuid: string): Promise<ProductVariant[] | undefined> {
-    return this.productsRepository.getProductVariants(uuid);
+  async getProductVariants(
+    uuid: string,
+  ): Promise<ProductVariant[] | undefined> {
+    return await this.productsRepository.getProductVariants(uuid);
+  }
+
+  async addProductVariantToFavorites(
+    variantId: string,
+    userId: string,
+  ): Promise<OperationStatusDto> {
+    const variant =
+      await this.productsRepository.getProductVariantById(variantId);
+
+    if (!variant) {
+      throw new NotFoundException('Вариант продукта не найден');
+    }
+
+    await this.productsRepository.addProductVariantToFavorites(variant, userId);
+
+    return {
+      ok: true,
+    };
+  }
+
+  async removeProductVariantFromFavorites(
+    variantId: string,
+    userId: string,
+  ): Promise<OperationStatusDto> {
+    await this.productsRepository.removeProductVariantFromFavorites(
+      variantId,
+      userId,
+    );
+
+    return {
+      ok: true,
+    };
   }
 }

@@ -3,4 +3,5 @@ export enum TableNames {
   PRODUCT_VARIANTS = 'product_variants',
   CATEGORIES = 'categories',
   USERS = 'users',
+  USER_FAVORITE_PRODUCTS = 'user_favorite_products',
 }

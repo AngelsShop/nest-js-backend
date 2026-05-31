@@ -28,6 +28,7 @@ export class DbService {
       return res;
     } catch (err) {
       this.logger.error(err);
+      throw err;
     } finally {
       await client.end();
     }

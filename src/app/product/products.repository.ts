@@ -24,7 +24,6 @@ import {
   productVariantSchema,
 } from './entities/product-variant.entity';
 import { productCardDtoSchema } from './dto/product-card.dto';
-// import { productCardDtoSchema } from './dto/product-card.dto';
 
 @Injectable()
 export class ProductsRepository {
@@ -226,5 +225,55 @@ export class ProductsRepository {
     );
 
     return variants;
+  }
+
+  async getProductVariantById(id: string): Promise<ProductVariant | undefined> {
+    const productVariantsResult = await this.dbService.query(
+      `
+        SELECT
+          id,
+          name,
+          images,
+          price,
+          description,
+          color,
+          size,
+          product_id as "productId",
+          is_default as "isDefault"
+        FROM ${TableNames.PRODUCT_VARIANTS}
+        WHERE
+          id = $1
+      `,
+      [id],
+    );
+
+    const variants = (productVariantsResult?.rows ?? []).map((v) =>
+      productVariantSchema.validateSync(v),
+    );
+
+    return variants[0];
+  }
+
+  async addProductVariantToFavorites(variant: ProductVariant, userId: string) {
+    await this.dbService.query(
+      `
+      INSERT INTO ${TableNames.USER_FAVORITE_PRODUCTS}
+      (user_id, product_id, product_variant_id)
+      VALUES ($1, $2, $3)
+    `,
+      [userId, variant.productId, variant.id],
+    );
+  }
+
+  async removeProductVariantFromFavorites(id: string, userId: string) {
+    await this.dbService.query(
+      `
+        DELETE FROM ${TableNames.USER_FAVORITE_PRODUCTS}
+        WHERE
+          product_variant_id = $1
+          AND user_id = $2
+      `,
+      [id, userId],
+    );
   }
 }
