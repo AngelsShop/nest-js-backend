@@ -12,6 +12,7 @@ async function bootstrap() {
   const swagger = new DocumentBuilder()
     .addBearerAuth()
     .setTitle('API для AngelsShop')
+    .setExternalDoc('angels-shop.ru', 'https://www.angels-shop.ru')
     .setVersion('v1')
     .build();
 
