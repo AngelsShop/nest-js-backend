@@ -36,6 +36,7 @@ export class AuthController {
 
     response.cookie(TOKEN_COOKIE_NAME, signUpResult.access_token, {
       httpOnly: true,
+      maxAge: 60 * 60 * 1000,
     });
 
     return signUpResult;
