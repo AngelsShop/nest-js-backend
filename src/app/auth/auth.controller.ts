@@ -22,8 +22,18 @@ export class AuthController {
   @Post('signin')
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: SignInDto })
-  signIn(@Request() request: RequestWithUser) {
-    return this.authService.signIn(request.user);
+  signIn(
+    @Request() request: RequestWithUser,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const signInResult = this.authService.signIn(request.user);
+
+    response.cookie(TOKEN_COOKIE_NAME, signInResult.access_token, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 1000,
+    });
+
+    return signInResult;
   }
 
   @Post('signup')
