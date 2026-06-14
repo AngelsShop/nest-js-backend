@@ -29,6 +29,9 @@ export class ProductVariant {
 
   @ApiProperty()
   isDefault: boolean;
+
+  @ApiProperty()
+  isFavorite?: boolean;
 }
 
 export const productVariantSchema: ObjectSchema<ProductVariant> = object({
@@ -38,6 +41,7 @@ export const productVariantSchema: ObjectSchema<ProductVariant> = object({
   description: string().required(),
   color: string().required(),
   isDefault: boolean().required(),
+  isFavorite: boolean().optional(),
   price: number().required(),
   images: array(string().required()).required(),
   size: string().oneOf(Object.values(Size)).required(),

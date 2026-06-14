@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
-import { array, number, object, string } from 'yup';
+import { array, boolean, number, object, ObjectSchema, string } from 'yup';
 import { ProductVariant } from './product-variant.entity';
 
 export class ProductListItem {
@@ -20,6 +20,9 @@ export class ProductListItem {
   price: number;
 
   @ApiProperty()
+  isFavorite?: boolean;
+
+  @ApiProperty()
   colors: ProductVariant['color'][];
 
   @ApiProperty()
@@ -29,11 +32,12 @@ export class ProductListItem {
   categoryId?: string;
 }
 
-export const productListItemSchema = object({
+export const productListItemSchema: ObjectSchema<ProductListItem> = object({
   productId: string().uuid().required(),
   variantId: string().uuid().required(),
   title: string().required(),
   price: number().required(),
+  isFavorite: boolean().optional(),
   previewImage: string().required(),
   categoryId: string()
     .transform((value: string | null) => value ?? undefined)

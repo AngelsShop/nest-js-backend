@@ -103,7 +103,7 @@ export class ProductsRepository {
           ${TableNames.PRODUCT_VARIANTS}.is_default as "isDefault",
           ${TableNames.PRODUCT_VARIANTS}.price
         FROM ${TableNames.PRODUCTS}
-        JOIN  ${TableNames.PRODUCT_VARIANTS}
+        JOIN ${TableNames.PRODUCT_VARIANTS}
         ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
         WHERE
           ${TableNames.PRODUCTS}.id = ANY($1)
@@ -140,6 +140,7 @@ export class ProductsRepository {
           ...item,
           sizes: [...(attributesMap[item.productId]?.sizes ?? [])],
           colors: [...(attributesMap[item.productId]?.colors ?? [])],
+          isFavorite: false,
         });
 
         return arr;

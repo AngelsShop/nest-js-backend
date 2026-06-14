@@ -2,12 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { default as cookieParser } from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
 
   app.setGlobalPrefix('/api/v1');
   app.useGlobalPipes(new ValidationPipe());
+  app.use(cookieParser());
 
   const swagger = new DocumentBuilder()
     .addBearerAuth()
