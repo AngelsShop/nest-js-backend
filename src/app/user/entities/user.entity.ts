@@ -1,26 +1,23 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { object, ObjectSchema, string } from 'yup';
 
-export class User {
-  @ApiProperty()
+export class UserEntity {
   id: string;
 
-  @ApiProperty()
   phone: string;
 
-  @ApiProperty()
+  passwordHash: string;
+
   email?: string;
 
-  @ApiProperty()
   firstName?: string;
 
-  @ApiProperty()
   lastName?: string;
 }
 
-export const schema: ObjectSchema<User> = object({
+export const UserEntitySchema: ObjectSchema<UserEntity> = object({
   id: string().required(),
   phone: string().required(),
+  passwordHash: string().required(),
   email: string()
     .transform((v: string | null) => v ?? undefined)
     .optional(),

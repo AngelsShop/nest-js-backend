@@ -10,7 +10,7 @@ import { compare, hash } from 'bcrypt';
 import { SALT_ROUNDS } from './constants';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '$app/user/user.service';
-import { User, schema } from '$app/user/entities/user.entity';
+import { UserDto } from '$app/user/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,14 +19,14 @@ export class AuthService {
     private readonly userService: UserService,
   ) {}
 
-  signIn(user: User) {
+  signIn(user: UserDto) {
     const payload = { username: user.phone, sub: user.id };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async validateUser(signInDto: SignInDto): Promise<User | undefined> {
+  async validateUser(signInDto: SignInDto): Promise<UserDto | undefined> {
     const user = await this.userService.getUser(signInDto.login);
 
     if (!user) {
@@ -43,7 +43,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    return schema.validateSync(user);
+    return user;
   }
 
   async signUp(dto: SignUpDto) {

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-import { User } from '../entities/user.entity';
+import { UserDto } from '../dto/user.dto';
 
 export class CreateUserDto {
   @ApiProperty()
@@ -17,5 +17,5 @@ export class CreateUserResponseDto {
   access_token: string;
 
   @ApiProperty()
-  user: User;
+  user: UserDto;
 }

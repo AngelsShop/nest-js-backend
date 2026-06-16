@@ -1,9 +1,9 @@
 import { Request } from 'express';
 import { JWTValidateResponse } from './jwt';
-import { User } from '$app/user/entities/user.entity';
+import { UserDto } from '$app/user/dto/user.dto';
 
 export type RequestWithUser = Request & {
-  user: User;
+  user: UserDto;
 };
 export type RequestWithJWTPayload = Request & {
   user: JWTValidateResponse;

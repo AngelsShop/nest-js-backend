@@ -1,9 +1,9 @@
-import { User } from '../entities/user.entity';
+import { UserDto } from '../dto/user.dto';
 
 export const mapDtoNamesToColumnNames = (
-  field: keyof User,
+  field: keyof UserDto,
 ): string | undefined => {
-  const map: Record<Exclude<keyof User, 'id'>, string> = {
+  const map: Record<Exclude<keyof UserDto, 'id'>, string> = {
     phone: 'phone',
     email: 'email',
     firstName: 'first_name',

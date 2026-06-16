@@ -1,4 +1,4 @@
-import { User } from '$app/user/entities/user.entity';
+import { UserDto } from '$app/user/dto/user.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
@@ -17,5 +17,5 @@ export class SignUpResponseDto {
   access_token: string;
 
   @ApiProperty()
-  user: User;
+  user: UserDto;
 }

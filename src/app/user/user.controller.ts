@@ -1,29 +1,29 @@
 import { JwtAuthGuard } from '$app/auth/passport/jwt-auth.guard';
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-import { User } from './entities/user.entity';
 import { UserService } from './user.service';
-import { type RequestWithUser } from '$app/auth/types/requestWithUser';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+import { CurrentUserId } from 'src/decorators/current-user-id.decorator';
 
 @Controller('user')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@ApiResponse({ type: User })
+@ApiResponse({ type: UserDto })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  async getUser(@Req() request: RequestWithUser) {
-    return await this.userService.getUser(request.user.id);
+  async getUser(@CurrentUserId() userId: string) {
+    return await this.userService.getUser(userId);
   }
 
   @Patch('update')
-  @ApiResponse({ type: User })
+  @ApiResponse({ type: UserDto })
   async updateUser(
     @Body() user: UpdateUserDto,
-    @Req() request: RequestWithUser,
+    @CurrentUserId() userId: string,
   ) {
-    return this.userService.updateUser(request.user.id, user);
+    return this.userService.updateUser(userId, user);
   }
 }

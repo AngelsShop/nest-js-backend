@@ -3,7 +3,7 @@ import { DbService } from 'src/common/service/db/db.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { TableNames } from 'src/constants/tables';
 import { getInsertValuesPlaceholders } from '$lib/getInsertValuesPlaceholders';
-import { User, schema } from './entities/user.entity';
+import { UserEntity, UserEntitySchema } from './entities/user.entity';
 import { object, string } from 'yup';
 import { mapDtoNamesToColumnNames } from './helpers/mapDtoNamesToColumnNames';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -49,7 +49,7 @@ export class UserRepository {
     return passwordHash;
   }
 
-  async getUser(loginOrId: string): Promise<User | undefined> {
+  async getUser(loginOrId: string): Promise<UserEntity | undefined> {
     const res = await this.dbService.query(
       `
         SELECT
@@ -72,7 +72,7 @@ export class UserRepository {
       return;
     }
 
-    return schema.validate(user);
+    return UserEntitySchema.validate(user);
   }
 
   async createUser(data: CreateUserDto) {
@@ -91,10 +91,13 @@ export class UserRepository {
       [data.login, data.password],
     );
 
-    return schema.validateSync(res?.rows?.[0]);
+    return UserEntitySchema.validateSync(res?.rows?.[0]);
   }
 
-  async updateUser(id: string, user: UpdateUserDto) {
+  async updateUser(
+    id: string,
+    user: UpdateUserDto,
+  ): Promise<UserEntity | undefined> {
     const preparedData = this.prepareUpdateUserData(user);
 
     const res = await this.dbService.query(
@@ -120,6 +123,6 @@ export class UserRepository {
       return;
     }
 
-    return schema.validate(updateUser);
+    return UserEntitySchema.validate(updateUser);
   }
 }
