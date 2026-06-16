@@ -84,10 +84,10 @@ export class ProductsRepository {
     );
   }
 
-  async list({
-    filter,
-    pageData,
-  }: ListProductsRequest): Promise<ProductListItem[]> {
+  async list(
+    { filter, pageData }: ListProductsRequest,
+    userId?: string,
+  ): Promise<ProductListItem[]> {
     const cardIds = await this.getPageCardIds({ filter, pageData });
 
     const result = await this.dbService.query(
@@ -101,15 +101,24 @@ export class ProductsRepository {
           ${TableNames.PRODUCT_VARIANTS}.size,
           ${TableNames.PRODUCT_VARIANTS}.color,
           ${TableNames.PRODUCT_VARIANTS}.is_default as "isDefault",
-          ${TableNames.PRODUCT_VARIANTS}.price
+          ${TableNames.PRODUCT_VARIANTS}.price,
+          CASE
+            WHEN ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NOT NULL THEN true
+            ELSE false
+          END as "isFavorite"
         FROM ${TableNames.PRODUCTS}
         JOIN ${TableNames.PRODUCT_VARIANTS}
-        ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+          ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+        LEFT JOIN ${TableNames.USER_FAVORITE_PRODUCTS}
+          ON (
+            ${TableNames.USER_FAVORITE_PRODUCTS}.user_id = $2
+            AND ${TableNames.PRODUCT_VARIANTS}.id = ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id
+          )
         WHERE
           ${TableNames.PRODUCTS}.id = ANY($1)
         ORDER BY created_at DESC
       `,
-      [cardIds],
+      [cardIds, userId],
     );
 
     const listItems: ProductListItemDto[] = (result?.rows ?? []).map((v) =>
@@ -140,7 +149,6 @@ export class ProductsRepository {
           ...item,
           sizes: [...(attributesMap[item.productId]?.sizes ?? [])],
           colors: [...(attributesMap[item.productId]?.colors ?? [])],
-          isFavorite: false,
         });
 
         return arr;
@@ -159,7 +167,7 @@ export class ProductsRepository {
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
 
-  async getById(id: string): Promise<ProductCard | undefined> {
+  async getById(id: string, userId?: string): Promise<ProductCard | undefined> {
     const productCardResult = await this.dbService.query(
       `
         SELECT
@@ -168,15 +176,24 @@ export class ProductsRepository {
           ${TableNames.PRODUCTS}.preview_image as "previewImage",
           ${TableNames.PRODUCTS}.created_at as "createdAt",
           ${TableNames.PRODUCTS}.category_id as "categoryId",
-          ${TableNames.PRODUCT_VARIANTS}.id as "variantId"
+          ${TableNames.PRODUCT_VARIANTS}.id as "variantId",
+          CASE
+            WHEN ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NOT NULL THEN true
+            ELSE false
+          END as "isFavorite"
         FROM ${TableNames.PRODUCTS}
         JOIN ${TableNames.PRODUCT_VARIANTS}
-        ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+          ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+        LEFT JOIN ${TableNames.USER_FAVORITE_PRODUCTS}
+          ON (
+            ${TableNames.PRODUCT_VARIANTS}.id = ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id
+            AND ${TableNames.USER_FAVORITE_PRODUCTS}.user_id = $2
+          )
         WHERE
           ${TableNames.PRODUCT_VARIANTS}.product_id = $1
           AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
       `,
-      [id],
+      [id, userId],
     );
 
     const productCard = (productCardResult?.rows ?? []).map((c) =>
@@ -201,7 +218,10 @@ export class ProductsRepository {
     };
   }
 
-  async getProductVariants(id: string): Promise<ProductVariant[]> {
+  async getProductVariants(
+    id: string,
+    userId?: string,
+  ): Promise<ProductVariant[]> {
     const productVariantsResult = await this.dbService.query(
       `
         SELECT
@@ -213,12 +233,21 @@ export class ProductsRepository {
           color,
           size,
           product_id as "productId",
-          is_default as "isDefault"
+          is_default as "isDefault",
+          CASE
+            WHEN ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NOT NULL THEN true
+            ELSE false
+          END as "isFavorite"
         FROM ${TableNames.PRODUCT_VARIANTS}
+        LEFT JOIN ${TableNames.USER_FAVORITE_PRODUCTS}
+          ON (
+            id = ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id
+            AND ${TableNames.USER_FAVORITE_PRODUCTS}.user_id = $2
+          )
         WHERE
           product_id = $1
       `,
-      [id],
+      [id, userId],
     );
 
     const variants = (productVariantsResult?.rows ?? []).map((v) =>
@@ -259,10 +288,10 @@ export class ProductsRepository {
     await this.dbService.query(
       `
       INSERT INTO ${TableNames.USER_FAVORITE_PRODUCTS}
-      (user_id, product_id, product_variant_id)
-      VALUES ($1, $2, $3)
+      (user_id, product_variant_id)
+      VALUES ($1, $2)
     `,
-      [userId, variant.productId, variant.id],
+      [userId, variant.id],
     );
   }
 

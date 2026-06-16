@@ -13,9 +13,10 @@ export class ProductService {
 
   async list(
     data: ListProductsRequest,
+    userId?: string,
   ): Promise<PaginatedResponse<ProductListItem>> {
     const [items, totalPages] = await Promise.all([
-      this.productsRepository.list(data),
+      this.productsRepository.list(data, userId),
       this.productsRepository.countPages(data),
     ]);
 
@@ -28,14 +29,15 @@ export class ProductService {
     };
   }
 
-  async getById(id: string): Promise<ProductCard | undefined> {
-    return await this.productsRepository.getById(id);
+  async getById(id: string, userId?: string): Promise<ProductCard | undefined> {
+    return await this.productsRepository.getById(id, userId);
   }
 
   async getProductVariants(
     uuid: string,
+    userId?: string,
   ): Promise<ProductVariant[] | undefined> {
-    return await this.productsRepository.getProductVariants(uuid);
+    return await this.productsRepository.getProductVariants(uuid, userId);
   }
 
   async addProductVariantToFavorites(

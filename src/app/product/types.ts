@@ -5,6 +5,7 @@ import { ProductListItemDto } from './dto/product-list-item.dto';
 export type ListProductsRequest = {
   filter: ListProductsFilter;
   pageData: PageDataRequest;
+  userId?: string;
 };
 
 export type ListProductsFilter = {

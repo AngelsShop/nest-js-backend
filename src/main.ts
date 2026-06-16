@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { default as cookieParser } from 'cookie-parser';
+import { JwtOptionalAuthGuard } from '$app/auth/passport/jwt-optional-auth.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -10,6 +11,7 @@ async function bootstrap() {
   app.setGlobalPrefix('/api/v1');
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
+  app.useGlobalGuards(new JwtOptionalAuthGuard());
 
   const swagger = new DocumentBuilder()
     .addBearerAuth()

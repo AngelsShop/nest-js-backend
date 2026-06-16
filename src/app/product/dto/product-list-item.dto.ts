@@ -11,6 +11,7 @@ export class ProductListItemDto {
   size: Size;
   color: string;
   isDefault: boolean;
+  isFavorite: boolean;
   price: number;
 }
 
@@ -22,6 +23,7 @@ export const productListItemDtoSchema: ObjectSchema<ProductListItemDto> =
     price: number().required(),
     color: string().required(),
     isDefault: boolean().required(),
+    isFavorite: boolean().required(),
     createdAt: date()
       .transform((v) => new Date(String(v)))
       .required(),

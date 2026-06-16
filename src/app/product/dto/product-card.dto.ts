@@ -1,4 +1,4 @@
-import { object, ObjectSchema, string } from 'yup';
+import { boolean, object, ObjectSchema, string } from 'yup';
 
 export class ProductCardDto {
   id: string;
@@ -7,6 +7,7 @@ export class ProductCardDto {
   createdAt: string;
   categoryId?: string;
   variantId: string;
+  isFavorite: boolean;
 }
 
 export const productCardDtoSchema: ObjectSchema<ProductCardDto> = object({
@@ -14,6 +15,7 @@ export const productCardDtoSchema: ObjectSchema<ProductCardDto> = object({
   title: string().required(),
   previewImage: string().required(),
   createdAt: string().required(),
+  isFavorite: boolean().required(),
   categoryId: string()
     .uuid()
     .transform((value: string | null) => value ?? undefined)

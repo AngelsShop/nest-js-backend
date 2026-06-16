@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  NotFoundException,
   Post,
   Request,
   Res,
@@ -23,10 +24,14 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @ApiBody({ type: SignInDto })
   signIn(
-    @Request() request: RequestWithUser,
+    @Request() { user }: RequestWithUser,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const signInResult = this.authService.signIn(request.user);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    const signInResult = this.authService.signIn(user);
 
     response.cookie(TOKEN_COOKIE_NAME, signInResult.access_token, {
       httpOnly: true,

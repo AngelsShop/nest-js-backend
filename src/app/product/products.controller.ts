@@ -10,7 +10,6 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ProductService } from './products.service';
@@ -21,7 +20,7 @@ import { ProductListItem } from './entities/product-list-item.entity';
 import { ProductVariant } from './entities/product-variant.entity';
 import { OperationStatusDto } from 'src/common/dto/status.dto';
 import { JwtAuthGuard } from '$app/auth/passport/jwt-auth.guard';
-import { type RequestWithUser } from '$app/auth/types/requestWithUser';
+import { CurrentUserId } from 'src/decorators/current-user-id.decorator';
 
 @Controller('product')
 export class ProductController {
@@ -55,23 +54,30 @@ export class ProductController {
     @Query('categoryId', new ParseUUIDPipe({ optional: true }))
     categoryId: string,
     @Query('size', new ParseEnumPipe(Size, { optional: true })) size: Size,
+    @CurrentUserId() userId: string | undefined,
   ) {
-    return this.productsService.list({
-      filter: {
-        size,
-        categoryId,
+    return this.productsService.list(
+      {
+        filter: {
+          size,
+          categoryId,
+        },
+        pageData: {
+          page,
+          limit,
+        },
       },
-      pageData: {
-        page,
-        limit,
-      },
-    });
+      userId,
+    );
   }
 
   @Get(':uuid')
   @ApiResponse({ type: ProductCard })
-  async getByID(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    const product = await this.productsService.getById(uuid);
+  async getByID(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @CurrentUserId() userId: string | undefined,
+  ) {
+    const product = await this.productsService.getById(uuid, userId);
 
     if (!product) {
       throw new HttpException(
@@ -85,8 +91,14 @@ export class ProductController {
 
   @Get(':uuid/variants')
   @ApiResponse({ type: ProductVariant })
-  async getProductVariants(@Param('uuid', new ParseUUIDPipe()) uuid: string) {
-    const variants = await this.productsService.getProductVariants(uuid);
+  async getProductVariants(
+    @Param('uuid', new ParseUUIDPipe()) uuid: string,
+    @CurrentUserId() userId: string | undefined,
+  ) {
+    const variants = await this.productsService.getProductVariants(
+      uuid,
+      userId,
+    );
 
     if (!variants) {
       throw new HttpException(
@@ -104,11 +116,11 @@ export class ProductController {
   @ApiResponse({ type: OperationStatusDto })
   async addItemToFavorites(
     @Param('uuid', new ParseUUIDPipe()) variantId: string,
-    @Req() request: RequestWithUser,
+    @CurrentUserId() userId: string,
   ) {
     return await this.productsService.addProductVariantToFavorites(
       variantId,
-      request.user.id,
+      userId,
     );
   }
 
@@ -118,11 +130,11 @@ export class ProductController {
   @ApiResponse({ type: OperationStatusDto })
   async removeItemFromFavorites(
     @Param('uuid', new ParseUUIDPipe()) variantId: string,
-    @Req() request: RequestWithUser,
+    @CurrentUserId() userId: string,
   ) {
     return await this.productsService.removeProductVariantFromFavorites(
       variantId,
-      request.user.id,
+      userId,
     );
   }
 }

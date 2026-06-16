@@ -20,7 +20,7 @@ export class ProductListItem {
   price: number;
 
   @ApiProperty()
-  isFavorite?: boolean;
+  isFavorite: boolean;
 
   @ApiProperty()
   colors: ProductVariant['color'][];
@@ -37,7 +37,7 @@ export const productListItemSchema: ObjectSchema<ProductListItem> = object({
   variantId: string().uuid().required(),
   title: string().required(),
   price: number().required(),
-  isFavorite: boolean().optional(),
+  isFavorite: boolean().required(),
   previewImage: string().required(),
   categoryId: string()
     .transform((value: string | null) => value ?? undefined)
