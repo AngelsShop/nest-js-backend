@@ -1,12 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryRepository } from './category.repository';
-import { Category } from './entities/category.entity';
+import { CategoryDto } from './dto/category.dto';
 
 @Injectable()
 export class CategoryService {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
-  list(): Promise<Category[]> {
-    return this.categoryRepository.list();
+  async list(): Promise<CategoryDto[]> {
+    const categories = await this.categoryRepository.list();
+
+    return categories.reduce<CategoryDto[]>((items, item) => {
+      items.push({
+        id: item.id,
+        name: item.name,
+        children: [],
+      });
+
+      return items;
+    }, []);
   }
 }
