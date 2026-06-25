@@ -5,8 +5,6 @@ export class UserEntity {
 
   phone: string;
 
-  passwordHash: string;
-
   email?: string;
 
   firstName?: string;
@@ -17,7 +15,6 @@ export class UserEntity {
 export const UserEntitySchema: ObjectSchema<UserEntity> = object({
   id: string().required(),
   phone: string().required(),
-  passwordHash: string().required(),
   email: string()
     .transform((v: string | null) => v ?? undefined)
     .optional(),

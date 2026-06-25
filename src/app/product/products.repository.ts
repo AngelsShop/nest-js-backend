@@ -7,23 +7,20 @@ import {
 } from './types';
 import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
-import { ProductCard } from './entities/product-card.entity';
+import { ProductEntity, ProductEntitySchema } from './entities/product.entity';
 import {
-  ProductListItem,
-  productListItemSchema,
+  ProductListItemEntity,
+  ProductListItemEntitySchema,
+  ProductListItemEntityShort,
+  ProductListItemShortSchema,
 } from './entities/product-list-item.entity';
 import { TableNames } from 'src/constants/tables';
 import { string } from 'yup';
 import {
-  ProductListItemDto,
-  productListItemDtoSchema,
-} from './dto/product-list-item.dto';
-import { Size } from 'src/constants/size';
-import {
-  ProductVariant,
-  productVariantSchema,
+  ProductVariantEntity,
+  ProductVariantEntitySchema,
 } from './entities/product-variant.entity';
-import { productCardDtoSchema } from './dto/product-card.dto';
+import { Size } from 'src/constants/size';
 
 @Injectable()
 export class ProductsRepository {
@@ -87,7 +84,7 @@ export class ProductsRepository {
   async list(
     { filter, pageData }: ListProductsRequest,
     userId?: string,
-  ): Promise<ProductListItem[]> {
+  ): Promise<ProductListItemEntity[]> {
     const cardIds = await this.getPageCardIds({ filter, pageData });
 
     const result = await this.dbService.query(
@@ -121,8 +118,8 @@ export class ProductsRepository {
       [cardIds, userId],
     );
 
-    const listItems: ProductListItemDto[] = (result?.rows ?? []).map((v) =>
-      productListItemDtoSchema.validateSync(v),
+    const listItems: ProductListItemEntityShort[] = (result?.rows ?? []).map(
+      (v) => ProductListItemShortSchema.validateSync(v),
     );
 
     const attributesMap = listItems.reduce<Record<string, ProductAttributes>>(
@@ -143,8 +140,8 @@ export class ProductsRepository {
     );
 
     return listItems
-      .filter(({ isDefault }) => isDefault)
-      .reduce<ProductListItem[]>((arr, item) => {
+      .filter(({ isDefault }) => Boolean(isDefault))
+      .reduce<ProductListItemEntity[]>((arr, item) => {
         arr.push({
           ...item,
           sizes: [...(attributesMap[item.productId]?.sizes ?? [])],
@@ -153,7 +150,7 @@ export class ProductsRepository {
 
         return arr;
       }, [])
-      .map((item) => productListItemSchema.validateSync(item));
+      .map((r) => ProductListItemEntitySchema.validateSync(r));
   }
 
   async countPages({ filter, pageData }: ListProductsRequest) {
@@ -167,7 +164,10 @@ export class ProductsRepository {
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
 
-  async getById(id: string, userId?: string): Promise<ProductCard | undefined> {
+  async getById(
+    id: string,
+    userId?: string,
+  ): Promise<ProductEntity | undefined> {
     const productCardResult = await this.dbService.query(
       `
         SELECT
@@ -183,45 +183,36 @@ export class ProductsRepository {
           END as "isFavorite"
         FROM ${TableNames.PRODUCTS}
         JOIN ${TableNames.PRODUCT_VARIANTS}
-          ON ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+          ON (
+            ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+            AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
+          )
         LEFT JOIN ${TableNames.USER_FAVORITE_PRODUCTS}
           ON (
             ${TableNames.PRODUCT_VARIANTS}.id = ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id
             AND ${TableNames.USER_FAVORITE_PRODUCTS}.user_id = $2
           )
         WHERE
-          ${TableNames.PRODUCT_VARIANTS}.product_id = $1
-          AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
+          ${TableNames.PRODUCTS}.id = $1
       `,
       [id, userId],
     );
 
     const productCard = (productCardResult?.rows ?? []).map((c) =>
-      productCardDtoSchema.validateSync(c),
+      ProductEntitySchema.validateSync(c),
     )[0];
 
     if (!productCard) {
       return;
     }
 
-    const variants = await this.getProductVariants(productCard.id);
-    const defaultVariant = variants.find(({ isDefault }) => isDefault);
-
-    if (!defaultVariant) {
-      return;
-    }
-
-    return {
-      ...productCard,
-      variant: defaultVariant,
-      variants,
-    };
+    return productCard;
   }
 
   async getProductVariants(
     id: string,
     userId?: string,
-  ): Promise<ProductVariant[]> {
+  ): Promise<ProductVariantEntity[]> {
     const productVariantsResult = await this.dbService.query(
       `
         SELECT
@@ -251,13 +242,15 @@ export class ProductsRepository {
     );
 
     const variants = (productVariantsResult?.rows ?? []).map((v) =>
-      productVariantSchema.validateSync(v),
+      ProductVariantEntitySchema.validateSync(v),
     );
 
     return variants;
   }
 
-  async getProductVariantById(id: string): Promise<ProductVariant | undefined> {
+  async getProductVariantById(
+    id: string,
+  ): Promise<ProductVariantEntity | undefined> {
     const productVariantsResult = await this.dbService.query(
       `
         SELECT
@@ -278,13 +271,16 @@ export class ProductsRepository {
     );
 
     const variants = (productVariantsResult?.rows ?? []).map((v) =>
-      productVariantSchema.validateSync(v),
+      ProductVariantEntitySchema.validateSync(v),
     );
 
     return variants[0];
   }
 
-  async addProductVariantToFavorites(variant: ProductVariant, userId: string) {
+  async addProductVariantToFavorites(
+    variant: ProductVariantEntity,
+    userId: string,
+  ) {
     await this.dbService.query(
       `
       INSERT INTO ${TableNames.USER_FAVORITE_PRODUCTS}

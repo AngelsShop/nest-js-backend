@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ListProductsRequest } from './types';
 import { ProductsRepository } from './products.repository';
-import { ProductCard } from './entities/product-card.entity';
 import { PaginatedResponse } from 'src/types/PageData';
-import { ProductListItem } from './entities/product-list-item.entity';
-import { ProductVariant } from './entities/product-variant.entity';
 import { OperationStatusDto } from 'src/common/dto/status.dto';
+import { ProductListItemDto } from './dto/product-list-item.dto';
+import { ProductDto } from './dto/product.dto';
+import { ProductVariantDto } from './dto/product-variant.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class ProductService {
@@ -14,14 +15,18 @@ export class ProductService {
   async list(
     data: ListProductsRequest,
     userId?: string,
-  ): Promise<PaginatedResponse<ProductListItem>> {
+  ): Promise<PaginatedResponse<ProductListItemDto>> {
     const [items, totalPages] = await Promise.all([
       this.productsRepository.list(data, userId),
       this.productsRepository.countPages(data),
     ]);
 
     return {
-      items,
+      items: items.map((item) =>
+        plainToInstance(ProductListItemDto, item, {
+          excludeExtraneousValues: true,
+        }),
+      ),
       pageData: {
         ...data.pageData,
         totalPages,
@@ -29,14 +34,39 @@ export class ProductService {
     };
   }
 
-  async getById(id: string, userId?: string): Promise<ProductCard | undefined> {
-    return await this.productsRepository.getById(id, userId);
+  async getById(id: string, userId?: string): Promise<ProductDto | undefined> {
+    const product = await this.productsRepository.getById(id, userId);
+
+    if (!product) {
+      throw new NotFoundException(`Продукт ${id} не найден!`);
+    }
+
+    const variant = await this.productsRepository.getProductVariantById(
+      product.variantId,
+    );
+
+    if (!variant) {
+      throw new NotFoundException(
+        `Дефолтный вариант ${product.variantId} у продукта ${id} не найден!`,
+      );
+    }
+
+    const variants = await this.productsRepository.getProductVariants(
+      id,
+      userId,
+    );
+
+    return {
+      ...product,
+      variant,
+      variants,
+    };
   }
 
   async getProductVariants(
     uuid: string,
     userId?: string,
-  ): Promise<ProductVariant[] | undefined> {
+  ): Promise<ProductVariantDto[] | undefined> {
     return await this.productsRepository.getProductVariants(uuid, userId);
   }
 

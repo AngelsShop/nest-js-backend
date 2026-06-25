@@ -1,6 +1,6 @@
 import { Size } from 'src/constants/size';
 import { PageDataRequest } from 'src/types/PageData';
-import { ProductListItemDto } from './dto/product-list-item.dto';
+import { ProductListItemEntity } from './entities/product-list-item.entity';
 
 export type ListProductsRequest = {
   filter: ListProductsFilter;
@@ -14,6 +14,6 @@ export type ListProductsFilter = {
 };
 
 export type ProductAttributes = {
-  sizes: Set<ProductListItemDto['size']>;
-  colors: Set<ProductListItemDto['color']>;
+  sizes: Set<ProductListItemEntity['size']>;
+  colors: Set<ProductListItemEntity['color']>;
 };

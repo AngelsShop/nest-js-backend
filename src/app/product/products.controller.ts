@@ -15,19 +15,19 @@ import {
 import { ProductService } from './products.service';
 import { ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
-import { ProductCard } from './entities/product-card.entity';
-import { ProductListItem } from './entities/product-list-item.entity';
-import { ProductVariant } from './entities/product-variant.entity';
 import { OperationStatusDto } from 'src/common/dto/status.dto';
 import { JwtAuthGuard } from '$app/auth/passport/jwt-auth.guard';
 import { CurrentUserId } from 'src/decorators/current-user-id.decorator';
+import { ProductListItemDto } from './dto/product-list-item.dto';
+import { ProductVariantDto } from './dto/product-variant.dto';
+import { ProductDto } from './dto/product.dto';
 
 @Controller('product')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
   @Get('/list')
-  @ApiResponse({ type: [ProductListItem] })
+  @ApiResponse({ type: [ProductListItemDto] })
   @ApiQuery({
     name: 'page',
     type: Number,
@@ -72,7 +72,7 @@ export class ProductController {
   }
 
   @Get(':uuid')
-  @ApiResponse({ type: ProductCard })
+  @ApiResponse({ type: ProductDto })
   async getByID(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @CurrentUserId() userId: string | undefined,
@@ -90,7 +90,7 @@ export class ProductController {
   }
 
   @Get(':uuid/variants')
-  @ApiResponse({ type: ProductVariant })
+  @ApiResponse({ type: ProductVariantDto })
   async getProductVariants(
     @Param('uuid', new ParseUUIDPipe()) uuid: string,
     @CurrentUserId() userId: string | undefined,

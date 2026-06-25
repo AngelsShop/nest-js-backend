@@ -1,35 +1,45 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Size } from 'src/constants/size';
-import { boolean, number, object, ObjectSchema, date, string } from 'yup';
+import { Expose } from 'class-transformer';
 
 export class ProductListItemDto {
+  @Expose()
+  @ApiProperty()
   productId: string;
+
+  @Expose()
+  @ApiProperty()
   variantId: string;
+
+  @Expose()
+  @ApiProperty()
   title: string;
+
+  @Expose()
+  @ApiProperty()
   previewImage: string;
-  createdAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  createdAt: string;
+
+  @Expose()
+  @ApiProperty()
   categoryId?: string;
-  size: Size;
-  color: string;
-  isDefault: boolean;
+
+  @Expose()
+  @ApiProperty()
+  sizes: Size[];
+
+  @Expose()
+  @ApiProperty()
+  colors: string[];
+
+  @Expose()
+  @ApiProperty()
   isFavorite: boolean;
+
+  @Expose()
+  @ApiProperty()
   price: number;
 }
-
-export const productListItemDtoSchema: ObjectSchema<ProductListItemDto> =
-  object({
-    productId: string().uuid().required(),
-    variantId: string().uuid().required(),
-    title: string().required(),
-    price: number().required(),
-    color: string().required(),
-    isDefault: boolean().required(),
-    isFavorite: boolean().required(),
-    createdAt: date()
-      .transform((v) => new Date(String(v)))
-      .required(),
-    previewImage: string().required(),
-    categoryId: string()
-      .transform((v: string | null) => v ?? undefined)
-      .optional(),
-    size: string().oneOf(Object.values(Size)).required(),
-  });

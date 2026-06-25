@@ -1,24 +1,29 @@
 import { boolean, object, ObjectSchema, string } from 'yup';
 
-export class ProductCardDto {
+export class ProductEntity {
   id: string;
+
   title: string;
+
   previewImage: string;
+
   createdAt: string;
-  categoryId?: string;
+
   variantId: string;
+
+  categoryId?: string;
+
   isFavorite: boolean;
 }
 
-export const productCardDtoSchema: ObjectSchema<ProductCardDto> = object({
+export const ProductEntitySchema: ObjectSchema<ProductEntity> = object({
   id: string().uuid().required(),
   title: string().required(),
-  previewImage: string().required(),
   createdAt: string().required(),
+  variantId: string().required(),
   isFavorite: boolean().required(),
+  previewImage: string().url().required(),
   categoryId: string()
-    .uuid()
     .transform((value: string | null) => value ?? undefined)
     .optional(),
-  variantId: string().uuid().required(),
-});
+}).stripUnknown();
