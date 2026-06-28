@@ -11,6 +11,7 @@ export type ListProductsRequest = {
 export type ListProductsFilter = {
   categoryId?: string;
   size?: Size;
+  isFavorite?: boolean;
 };
 
 export type ProductAttributes = {

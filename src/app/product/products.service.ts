@@ -14,10 +14,9 @@ export class ProductService {
 
   async list(
     data: ListProductsRequest,
-    userId?: string,
   ): Promise<PaginatedResponse<ProductListItemDto>> {
     const [items, totalPages] = await Promise.all([
-      this.productsRepository.list(data, userId),
+      this.productsRepository.list(data),
       this.productsRepository.countPages(data),
     ]);
 

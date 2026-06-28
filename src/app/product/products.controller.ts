@@ -56,19 +56,17 @@ export class ProductController {
     @Query('size', new ParseEnumPipe(Size, { optional: true })) size: Size,
     @CurrentUserId() userId: string | undefined,
   ) {
-    return this.productsService.list(
-      {
-        filter: {
-          size,
-          categoryId,
-        },
-        pageData: {
-          page,
-          limit,
-        },
+    return this.productsService.list({
+      filter: {
+        size,
+        categoryId,
+      },
+      pageData: {
+        page,
+        limit,
       },
       userId,
-    );
+    });
   }
 
   @Get(':uuid')
@@ -136,5 +134,51 @@ export class ProductController {
       variantId,
       userId,
     );
+  }
+
+  @Get('/favorites/list')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ type: [ProductListItemDto] })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    type: String,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'size',
+    enum: Size,
+    required: false,
+  })
+  favoritesList(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 30,
+    @Query('categoryId', new ParseUUIDPipe({ optional: true }))
+    categoryId: string,
+    @Query('size', new ParseEnumPipe(Size, { optional: true })) size: Size,
+    @CurrentUserId() userId: string | undefined,
+  ) {
+    return this.productsService.list({
+      filter: {
+        size,
+        categoryId,
+        isFavorite: true,
+      },
+      pageData: {
+        page,
+        limit,
+      },
+      userId,
+    });
   }
 }

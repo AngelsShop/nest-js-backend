@@ -5,7 +5,6 @@ import {
   ListProductsRequest,
   ProductAttributes,
 } from './types';
-import { ColumnsMap } from './constants/columns';
 import { PageDataRequest } from 'src/types/PageData';
 import { ProductEntity, ProductEntitySchema } from './entities/product.entity';
 import {
@@ -26,31 +25,83 @@ import { Size } from 'src/constants/size';
 export class ProductsRepository {
   constructor(private readonly dbService: DbService) {}
 
-  private getProductsFilterQuery(
-    filter: ListProductsFilter,
-    dbName?: TableNames,
-  ) {
+  private getProductsFilterQuery(filter: ListProductsFilter) {
     const filters: string[] = ['1=1'];
     const params: unknown[] = [];
 
-    for (const key in filter) {
-      const dbField = ColumnsMap[key];
+    const fieldsFilters: Partial<
+      Record<
+        keyof ListProductsFilter,
+        string | ((paramCount: number) => string)
+      >
+    > = {
+      size: (paramCount) =>
+        `${TableNames.PRODUCT_VARIANTS}.size = $${paramCount}`,
+      categoryId: (paramCount) =>
+        `${TableNames.PRODUCTS}.category_id = $${paramCount}`,
+    };
 
-      if (!dbField || filter[key] === undefined) {
+    for (const key in filter) {
+      if (!(key in fieldsFilters)) {
         continue;
       }
 
-      params.push(filter[key]);
+      const filterQuery = fieldsFilters[key as keyof typeof fieldsFilters];
+
+      if (filter[key] === undefined || filterQuery === undefined) {
+        continue;
+      }
+
+      if (typeof filterQuery === 'function') {
+        params.push(filter[key]);
+      }
 
       filters.push(
-        `${dbName ? dbName + '.' : ''}${dbField} = $${params.length}`,
+        typeof filterQuery === 'function'
+          ? filterQuery(params.length)
+          : filterQuery,
       );
+    }
+
+    if (filter.isFavorite !== undefined) {
+      if (filter.isFavorite) {
+        filters.push(
+          `${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NOT NULL`,
+        );
+      } else {
+        filters.push(
+          `${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NULL`,
+        );
+      }
     }
 
     return {
       filters: filters.join(' AND '),
       params,
     };
+  }
+
+  private getListProductsQuery(filters: string, paramsLength: number) {
+    return `
+      SELECT
+        ${TableNames.PRODUCTS}.id,
+        CASE
+          WHEN ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id IS NOT NULL THEN true
+          ELSE false
+        END as "isFavorite"
+      FROM ${TableNames.PRODUCTS}
+      JOIN ${TableNames.PRODUCT_VARIANTS}
+          ON (
+            ${TableNames.PRODUCT_VARIANTS}.product_id = ${TableNames.PRODUCTS}.id
+            AND ${TableNames.PRODUCT_VARIANTS}.is_default = true
+          )
+      LEFT JOIN ${TableNames.USER_FAVORITE_PRODUCTS}
+        ON (
+          ${TableNames.USER_FAVORITE_PRODUCTS}.user_id = $${paramsLength + 1}
+          AND ${TableNames.PRODUCT_VARIANTS}.id = ${TableNames.USER_FAVORITE_PRODUCTS}.product_variant_id
+        )
+      WHERE ${filters}
+    `;
   }
 
   private getPagination({ page, limit }: PageDataRequest) {
@@ -60,20 +111,16 @@ export class ProductsRepository {
   private async getPageCardIds({
     filter,
     pageData,
+    userId,
   }: ListProductsRequest): Promise<string[]> {
-    const { filters, params } = this.getProductsFilterQuery(
-      filter,
-      TableNames.PRODUCTS,
-    );
+    const { filters, params } = this.getProductsFilterQuery(filter);
 
     const result = await this.dbService.query<{ id: string }>(
       `
-      SELECT id
-      FROM ${TableNames.PRODUCTS}
-      WHERE ${filters}
+      ${this.getListProductsQuery(filters, params.length)}
       ${this.getPagination(pageData)}
     `,
-      params,
+      [...params, userId],
     );
 
     return (result?.rows ?? []).map(({ id }) =>
@@ -81,11 +128,12 @@ export class ProductsRepository {
     );
   }
 
-  async list(
-    { filter, pageData }: ListProductsRequest,
-    userId?: string,
-  ): Promise<ProductListItemEntity[]> {
-    const cardIds = await this.getPageCardIds({ filter, pageData });
+  async list({
+    filter,
+    pageData,
+    userId,
+  }: ListProductsRequest): Promise<ProductListItemEntity[]> {
+    const cardIds = await this.getPageCardIds({ filter, pageData, userId });
 
     const result = await this.dbService.query(
       `
@@ -153,13 +201,15 @@ export class ProductsRepository {
       .map((r) => ProductListItemEntitySchema.validateSync(r));
   }
 
-  async countPages({ filter, pageData }: ListProductsRequest) {
+  async countPages({ filter, pageData, userId }: ListProductsRequest) {
     const { filters, params } = this.getProductsFilterQuery(filter);
 
     const result = await this.dbService.query(
-      `SELECT * FROM ${TableNames.PRODUCTS} WHERE ${filters} ORDER BY created_at DESC`,
-      params,
+      `${this.getListProductsQuery(filters, params.length)}`,
+      [...params, userId],
     );
+
+    console.log(result);
 
     return Math.ceil((result?.rowCount ?? 0) / pageData.limit);
   }
